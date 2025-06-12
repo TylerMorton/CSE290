@@ -5,6 +5,7 @@ structure BpfRegister where
   -- 32 bit
   u32_min : UInt32
   u32_max: UInt32
+  well_formed: u32_min ≤ u32_max
   -- s32_min : Int32
   -- s32_max: Int32
   -- 64 bit
@@ -19,6 +20,10 @@ structure BpfRegister where
 --   (reg.var_off.mask = 0 →
 --     (↑reg.s64_min = ↑ reg.s64_max ∧
 --     ↑reg.u64_max = ↑reg.u64_min))
+
+
+
+
 
 def well_formed_min_max_int32 (min max : Int32) : Prop := min ≤ max
 def well_formed_min_max_uint32 (min max : UInt32) : Prop := min ≤ max
