@@ -5,10 +5,7 @@ import EbpfVerifierRangeAnalysis.Register
 
 --- Intro:
 
-
--- ** Addition **
-
--- Definitions
+-- **Addition**
 
 def scalar_add_32(a b: BpfRegister) : BpfRegister :=
   let (u32_min, u32_max) := if unsignedCheckAddOverflow32 a.u32_min b.u32_min ∨
@@ -16,17 +13,9 @@ def scalar_add_32(a b: BpfRegister) : BpfRegister :=
     (0, UInt32_max)
     else
     (a.u32_min + b.u32_min, a.u32_max + b.u32_max)
-
-  -- let (s32_min, s32_max) := if signedCheckAddOverflow32 a.s32_min b.s32_min ∨
-  --   signedCheckAddOverflow32 a.s32_max b.s32_max then
-  --   (0, Int32_max) else
-  --   (a.s32_min + b.s32_min, a.s32_max + b.s32_max)
-
   {
     u32_min := u32_min,
     u32_max := u32_max,
-    --s32_min := s32_min,
-    --s32_max := s32_max,
     var_off    := a.var_off
   }
 
@@ -67,20 +56,4 @@ theorem scalar_add_32_bounds ( a b : BpfRegister) :
       -- bv_decide
       sorry -- :(
 
-@[simp]
-def bpf_reg_add(a b : BpfRegister) : BpfRegister :=
-  let sum32 := scalar_add_32 a b
-  {
-    u32_max := sum32.u32_max
-    u32_min := sum32.u32_min
-    -- s32_max := sum32.s32_max
-    --s32_min := sum32.s32_min
-    var_off := tnum_add a.var_off b.var_off
-  }
-
-@[simp]
-lemma Nat.lt_add_lt_int_if {a b : UInt32} (h : a < b) : (a.toNat : Nat) < (b.toNat : Nat) := by
-  exact UInt32.lt_iff_toNat_lt.mp h
-
-
--- Subtraction
+-- **Subtraction**
