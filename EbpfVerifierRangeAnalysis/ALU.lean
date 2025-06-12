@@ -30,6 +30,7 @@ def scalar_add_32(a b: BpfRegister) : BpfRegister :=
     var_off    := a.var_off
   }
 
+@[simp]
 theorem scalar_add_32_bounds_min (a b : BpfRegister) :
   (scalar_add_32 a b).u32_min ≤  a.u32_min + b.u32_min := by
   unfold scalar_add_32
@@ -37,24 +38,78 @@ theorem scalar_add_32_bounds_min (a b : BpfRegister) :
   · simp
   · simp
 
+-- TODO: Version 1
+-- @[simp]
+-- theorem scalar_add_32_bounds_max (a b : BpfRegister) :
+--   (scalar_add_32 a b).u32_max ≥  a.u32_max ∧ (scalar_add_32 a b).u32_max ≥ b.u32_max := by
+--   unfold scalar_add_32
+--   split_ifs with h
+--   · simp
+--     split_ands
+--     · unfold UInt32_max
+--       have h : a.u32_max.toNat ≤ 2^32 - 1 := Nat.le_pred_of_lt (UInt32.toNat_lt a.u32_max)
+--       apply h
+--     · unfold UInt32_max
+--       have h : b.u32_max.toNat ≤ 2^32 - 1 := Nat.le_pred_of_lt (UInt32.toNat_lt b.u32_max)
+--       apply h
+--   · simp
+--     split_ands
+--     -- ·  have h : a.u32_max ≤ a.u32_max + b.u32_max :=
+--     -- · unfold UInt32_max
+--     --   have h : b.u32_max.toNat ≤ 2^32 - 1 := Nat.le_pred_of_lt (UInt32.toNat_lt b.u32_max)
+--     --   apply h
+--     · sorry
+--     · sorry
+
+-- TODO: Version 2
+-- @[simp]
+-- theorem scalar_add_32_bounds_max (a b : BpfRegister) :
+--   (scalar_add_32 a b).u32_max ≥  a.u32_max + b.u32_max := by
+--   unfold scalar_add_32
+--   split_ifs with h
+--   · simp
+--     unfold UInt32_max
+--     simp
+--     have h : a.u32_max.toNat + b.u32_max.toNat ≤ 2^32 - 1 := Nat.le_pred_of_lt (UInt32.toNat_lt a.u32_max)
+--     split_ands
+--     · unfold UInt32_max
+--       have h : a.u32_max.toNat ≤ 2^32 - 1 := Nat.le_pred_of_lt (UInt32.toNat_lt a.u32_max)
+--       apply h
+--     · unfold UInt32_max
+--       have h : b.u32_max.toNat ≤ 2^32 - 1 := Nat.le_pred_of_lt (UInt32.toNat_lt b.u32_max)
+--       apply h
+--   · simp
+--     split_ands
+--     -- ·  have h : a.u32_max ≤ a.u32_max + b.u32_max :=
+--     -- · unfold UInt32_max
+--     --   have h : b.u32_max.toNat ≤ 2^32 - 1 := Nat.le_pred_of_lt (UInt32.toNat_lt b.u32_max)
+--     --   apply h
+--     · sorry
+--     · sorry
+
+@[simp]
 theorem scalar_add_32_bounds_max (a b : BpfRegister) :
-  (scalar_add_32 a b).u32_max ≥  a.u32_max ∧ (scalar_add_32 a b).u32_max ≥ b.u32_max := by
-  unfold scalar_add_32
-  split_ifs with h
+  (scalar_add_32 a b).u32_max ≥  a.u32_max + b.u32_max:= by
+  sorry
+
+
+
+theorem scalar_add_32_bounds ( a b : BpfRegister) :
+  ((scalar_add_32 a b).u32_min ≤ a.u32_min + b.u32_min) ∧
+  ((scalar_add_32 a b).u32_max ≥ a.u32_max + b.u32_max) ∧
+  ((scalar_add_32 a b).u32_max ≥ (scalar_add_32 a b).u32_min)
+   := by
+  split_ands
   · simp
-    split_ands
-    · unfold UInt32_max
-      have h : a.u32_max.toNat ≤ 2^32 - 1 := Nat.le_pred_of_lt (UInt32.toNat_lt a.u32_max)
-      apply h
-    · unfold UInt32_max
-      have h : b.u32_max.toNat ≤ 2^32 - 1 := Nat.le_pred_of_lt (UInt32.toNat_lt b.u32_max)
-      apply h
   · simp
-    split_ands
-    ·  have h : a.u32_max ≤ a.u32_max + b.u32_max :=
-    · unfold UInt32_max
-      have h : b.u32_max.toNat ≤ 2^32 - 1 := Nat.le_pred_of_lt (UInt32.toNat_lt b.u32_max)
-      apply h
+  · unfold scalar_add_32
+    simp
+    split
+    · simp
+    · sorry -- :(
+  -- · apply scalar_add_32_bounds_min
+  -- · apply scalar_add_32_bounds_max
+
 
 @[simp]
 def bpf_reg_add(a b : BpfRegister) : BpfRegister :=
