@@ -9,11 +9,7 @@ import EbpfVerifierRangeAnalysis.Register
 -- ** Addition **
 
 -- Definitions
-def UInt32_max : UInt32 := UInt32.ofNat (2^32 - 1)
-def UInt_max : UInt64 := UInt64.ofNat (2^64 - 1)
-def Int32_max : Int32 := Int32.maxValue
 
-@[simp]
 def scalar_add_32(a b: BpfRegister) : BpfRegister :=
   let (u32_min, u32_max) := if unsignedCheckAddOverflow32 a.u32_min b.u32_min ∨
     unsignedCheckAddOverflow32 a.u32_max b.u32_max then
@@ -34,6 +30,31 @@ def scalar_add_32(a b: BpfRegister) : BpfRegister :=
     var_off    := a.var_off
   }
 
+theorem scalar_add_32_bounds_min (a b : BpfRegister) :
+  (scalar_add_32 a b).u32_min ≤  a.u32_min + b.u32_min := by
+  unfold scalar_add_32
+  split_ifs with h
+  · simp
+  · simp
+
+theorem scalar_add_32_bounds_max (a b : BpfRegister) :
+  (scalar_add_32 a b).u32_max ≥  a.u32_max ∧ (scalar_add_32 a b).u32_max ≥ b.u32_max := by
+  unfold scalar_add_32
+  split_ifs with h
+  · simp
+    split_ands
+    · unfold UInt32_max
+      have h : a.u32_max.toNat ≤ 2^32 - 1 := Nat.le_pred_of_lt (UInt32.toNat_lt a.u32_max)
+      apply h
+    · unfold UInt32_max
+      have h : b.u32_max.toNat ≤ 2^32 - 1 := Nat.le_pred_of_lt (UInt32.toNat_lt b.u32_max)
+      apply h
+  · simp
+    split_ands
+    ·  have h : a.u32_max ≤ a.u32_max + b.u32_max :=
+    · unfold UInt32_max
+      have h : b.u32_max.toNat ≤ 2^32 - 1 := Nat.le_pred_of_lt (UInt32.toNat_lt b.u32_max)
+      apply h
 
 @[simp]
 def bpf_reg_add(a b : BpfRegister) : BpfRegister :=
@@ -58,16 +79,28 @@ theorem zero_lt_UInt32_max : (0 : UInt32) < UInt32.max := by
   exact Nat.zero_lt_pow (by decide) 32
 
 
-lemma UInt32.lt_toNat {a b : UInt32} : a < b ↔ a.toNat < b.toNat := by
-  unfold UInt32.instIntCast
-  unfold Lt.lt instLTUInt32
-  unfold LT.lt instLTUInt32
-  unfold UInt32.lt
-  simp only [compare, decide_eq_true_eq]
-  cases h : compare a b
-  case lt => simp [compare, h]
-  case eq => simp [compare, h]
-  case gt => simp [compare, h]
+
+theorem UInt32.add_lt_add {a b c d : UInt32} (h₁ : a < b) (h₂ : c < d) : a + c < b + d :=
+  UInt32.lt_trans (UInt32.add_lt_add_right h₁ c) (UInt32.add_lt_add_left h₂ b)
+
+theorem UInt32.add_lt_add_right {a b : UInt32} (h: a < b) (k : UInt32) : a + k < b + k :=
+  UInt32.add_comm k b ▸ UInt32.add_comm k a ▸ UInt32.add_lt_addleft
+
+
+theorem UInt32.add_lt_add_left {a b : UInt32}
+(h: a.toNat < b.toNat) (k: UInt32)
+(h1: (a.toNat + k.toNat) < 2^32)
+(h2: (b.toNat + k.toNat) < 2^32):
+(a + k).toNat < (b + k).toNat := by
+have ha' : (a + k).toNat = a.toNat + k.toNat := UInt32.toNat_add_ofNat h1
+
+simp [add, instAddUInt32]
+simp [add, UInt32.add, OfNat.ofNat, UInt32.ofNat, UInt32.toNat]
+
+
+@[simp]
+lemma Nat.lt_add_lt_int_if {a b : UInt32} (h : a < b) : (a.toNat : Nat) < (b.toNat : Nat) := by
+  exact UInt32.lt_iff_toNat_lt.mp h
 
 theorem scalar_add_32_range_bounds
   (a b : BpfRegister)
@@ -86,10 +119,19 @@ theorem scalar_add_32_range_bounds
       split_ifs with h
       · simp [scalar_add_32, h_overflow]
         rw [UInt32_max]
+        simp
       · simp [scalar_add_32, h_overflow]
         rw [UInt32.lt_iff_toNat_lt] at ha
         rw [UInt32.lt_iff_toNat_lt] at hb
-        exact Nat.add_lt_add ha hb
+        have h1 : a.u32_min.toNat < a.u32_max.toNat := Nat.lt_add_lt_int_if ha
+        have h2 : b.u32_min.toNat < b.u32_max.toNat := Nat.lt_add_lt_int_if hb
+        have h3 : Nat.add_lt_add (a.u32_min.toNat < a.u32_max.toNat) (b.u32_min.toNat < b.u32_max.toNat)
+have sum_lt : x1.toNat + x2.toNat < y1.toNat + y2.toNat := Nat.add_lt_add h1 h2
+
+        have ha' := Nat.lt_add_lt_int_if ha
+        have hb' := Nat.lt_add_lt_int_if hb
+        simp
+        exact Nat.add_lt_add ha' hb'
 
     exact Nat.zero_le (UInt32_max.toNat)
 

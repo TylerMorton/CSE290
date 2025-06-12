@@ -5,8 +5,8 @@ structure BpfRegister where
   -- 32 bit
   u32_min : UInt32
   u32_max: UInt32
-  s32_min : Int32
-  s32_max: Int32
+  -- s32_min : Int32
+  -- s32_max: Int32
   -- 64 bit
   --u64_min: UInt64
   --u64_max: UInt64
